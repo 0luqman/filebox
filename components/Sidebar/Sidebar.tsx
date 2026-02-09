@@ -146,7 +146,6 @@ const Sidebar: React.FC = () => {
             <Search size={16} className="mr-2" />
             <span>Search</span>
         </div>
-        {/* Deploy button removed */}
         <div 
             className="flex items-center px-3 py-1 text-sm text-notion-dim hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer"
             onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isAIOpen', value: true } })}

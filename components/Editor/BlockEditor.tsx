@@ -1,57 +1,117 @@
+
 import React, { useState } from 'react';
 import { useStore } from '../../store';
 import Block from './Block';
 import SlashMenu from './SlashMenu';
-import { Block as BlockInterface, BlockType } from '../../types';
+import { Block as BlockInterface, BlockType, Notification } from '../../types';
 import { generateId } from '../../utils';
-import { FileText, Calendar, Trello, CheckSquare, Bell, Clock, Briefcase, GraduationCap, Utensils, Activity, X } from 'lucide-react';
+import { FileText, Calendar, Trello, CheckSquare, Bell, Clock, Briefcase, GraduationCap, Utensils, Activity, X, List, CheckCircle, Circle, AtSign, Filter, Archive } from 'lucide-react';
 
 const InboxView: React.FC = () => {
     const { state, dispatch } = useStore();
+    const notifications = state.notifications;
+    
+    // Group notifications by 'group' field or fallback
+    const grouped = notifications.reduce((acc, n) => {
+        const group = n.group || 'Older';
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(n);
+        return acc;
+    }, {} as Record<string, Notification[]>);
+
+    const groupOrder = ['Today', 'Yesterday', 'This Week', 'Older'];
+
     return (
-        <div className="max-w-3xl mx-auto pt-12 px-12">
-            <h1 className="text-3xl font-bold mb-6 flex items-center">
-                <Bell className="mr-3" /> Inbox
-            </h1>
-            <div className="space-y-4">
-                {state.notifications.length === 0 && <div className="text-gray-500">You're all caught up!</div>}
-                {state.notifications.map(n => (
-                    <div key={n.id} className={`p-4 rounded-lg border ${n.read ? 'bg-white dark:bg-notion-dark-bg border-gray-200 dark:border-gray-700' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'}`}>
-                        <div className="flex justify-between items-start">
-                            <div className="text-sm">
-                                <p className="font-medium mb-1">{n.text}</p>
-                                <span className="text-xs text-gray-500 flex items-center"><Clock size={12} className="mr-1"/> {n.time}</span>
-                            </div>
-                            {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
-                        </div>
-                        {n.pageId && (
-                             <button 
-                                onClick={() => {
-                                    dispatch({ type: 'SET_PAGE', payload: n.pageId! });
-                                    dispatch({ type: 'MARK_NOTIFICATIONS_READ' });
-                                }}
-                                className="mt-2 text-xs text-notion-blue hover:underline"
-                            >
-                                Open Page
-                             </button>
-                        )}
-                    </div>
-                ))}
+        <div className="flex flex-col h-full bg-white dark:bg-notion-dark-bg text-notion-text dark:text-notion-dark-text">
+            {/* Inbox Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-notion-dark-bg z-10">
+                <h1 className="text-lg font-semibold flex items-center">
+                    Inbox
+                </h1>
+                <div className="flex space-x-2 text-xs">
+                     <button className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Unread</button>
+                     <button className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500">I created</button>
+                     <button className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500"><Filter size={12} className="inline mr-1"/> Filter</button>
+                     <button className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors text-gray-500"><Archive size={12}/></button>
+                </div>
             </div>
-            {state.notifications.some(n => !n.read) && (
-                <button 
-                    onClick={() => dispatch({ type: 'MARK_NOTIFICATIONS_READ' })}
-                    className="mt-6 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-300"
-                >
-                    Mark all as read
-                </button>
-            )}
+
+            <div className="flex-1 overflow-y-auto px-2">
+                {groupOrder.map(groupName => {
+                    const groupItems = grouped[groupName];
+                    if (!groupItems || groupItems.length === 0) return null;
+
+                    return (
+                        <div key={groupName} className="mt-6 mb-2">
+                            <div className="px-4 text-xs font-semibold text-gray-500 mb-2">{groupName}</div>
+                            {groupItems.map(n => (
+                                <div 
+                                    key={n.id} 
+                                    className={`relative group flex items-start p-3 mx-2 rounded-lg cursor-pointer transition-colors border-l-4 ${n.read ? 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/50' : 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10'}`}
+                                    onClick={() => {
+                                        if (n.pageId) dispatch({ type: 'SET_PAGE', payload: n.pageId });
+                                        if (!n.read) dispatch({ type: 'MARK_SINGLE_NOTIFICATION_READ', payload: n.id });
+                                    }}
+                                >
+                                    {/* Icon */}
+                                    <div className="mr-3 mt-0.5 text-gray-500">
+                                        {n.type === 'reminder' ? <Clock size={16} /> : <AtSign size={16} />}
+                                    </div>
+                                    
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-baseline mb-0.5">
+                                            <div className="text-sm">
+                                                <span className="font-semibold">{n.title}</span> 
+                                                <span className="mx-1 text-gray-400">in</span>
+                                                <span className="font-medium underline decoration-gray-300 dark:decoration-gray-600 underline-offset-2">{n.context}</span>
+                                            </div>
+                                            <div className="text-xs text-gray-400 whitespace-nowrap ml-2">{n.time}</div>
+                                        </div>
+                                        {n.description && (
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center">
+                                                {n.type === 'reminder' ? <Calendar size={10} className="mr-1.5"/> : <div className="w-1 h-1 bg-gray-400 rounded-full mr-1.5"></div>}
+                                                {n.description}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Unread Indicator / Actions */}
+                                    <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-notion-dark-bg shadow-sm border border-gray-200 dark:border-gray-700 rounded-md p-1">
+                                        <div 
+                                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"
+                                            title="Mark as read"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                dispatch({ type: 'MARK_SINGLE_NOTIFICATION_READ', payload: n.id });
+                                            }}
+                                        >
+                                            <CheckCircle size={14} />
+                                        </div>
+                                    </div>
+                                    {!n.read && (
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full group-hover:hidden"></div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })}
+                
+                {Object.keys(grouped).length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <Bell size={32} className="mb-2 opacity-20" />
+                        <span>You're all caught up!</span>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
 
 const TemplatesModal: React.FC<{ onClose: () => void, onApply: (t: string) => void }> = ({ onClose, onApply }) => {
     const templates = [
+        { id: 'tasks-tracker', name: 'Tasks Tracker', icon: <CheckSquare className="text-green-500" />, desc: 'Track tasks with status, priority, and assignees.' },
         { id: 'meeting', name: 'Meeting Notes', icon: <Calendar className="text-red-500" />, desc: 'Capture attendees, agenda, and action items.' },
         { id: 'roadmap', name: 'Product Roadmap', icon: <Trello className="text-blue-500" />, desc: 'Track features and timelines.' },
         { id: 'docs', name: 'Documentation', icon: <FileText className="text-yellow-500" />, desc: 'Write specifications and guides.' },
@@ -170,7 +230,29 @@ const BlockEditor: React.FC = () => {
       let title = "Untitled";
       let icon = "📄";
 
-      if (templateType === 'meeting') {
+      if (templateType === 'tasks-tracker') {
+          title = "Tasks Tracker"; icon = "✅";
+          newBlocks = [
+              { id: generateId(), type: 'text', content: 'Stay organized with tasks, your way.' },
+              { id: generateId(), type: 'table', content: '', properties: {
+                  columns: [
+                      { name: "Task name", type: "text" },
+                      { name: "Status", type: "status" },
+                      { name: "Assignee", type: "person" },
+                      { name: "Due date", type: "date" },
+                      { name: "Priority", type: "select" },
+                      { name: "Task type", type: "multi-select" },
+                      { name: "Description", type: "text" }
+                  ],
+                  rows: [
+                      ["Pair of Linear Equations and Light", "Not started", "Mir luqman", "02/09/2026", "Medium", "School", "Math, Science"],
+                      ["Rise of Nationalism in Europe and Hissa Nasr", "Not started", "Mir luqman", "02/09/2026", "Medium", "School", "SST, Urdu"],
+                      ["Session 4 of Puppy Raffle", "Not started", "Mir luqman", "02/09/2026", "High", "Web3", "I've to complete Lessons 21-33"],
+                      ["Resource and Development and Gazaliyaat", "Not started", "Mir luqman", "02/09/2026", "Medium", "School", "SST, Urdu"]
+                  ]
+              }}
+          ];
+      } else if (templateType === 'meeting') {
           title = "Meeting Notes"; icon = "📅";
           newBlocks = [
               { id: generateId(), type: 'h2', content: 'Attendees' },
@@ -269,6 +351,12 @@ const BlockEditor: React.FC = () => {
       dispatch({ type: 'SET_UI_STATE', payload: { key: 'isTemplatesOpen', value: false } });
   };
 
+  // Get the current slash command query from the active block content
+  const currentBlock = slashMenu.blockId ? blocks.find(b => b.id === slashMenu.blockId) : null;
+  const slashQuery = (currentBlock && currentBlock.content.startsWith('/')) 
+      ? currentBlock.content.slice(1) 
+      : '';
+
   return (
     <div className="max-w-3xl mx-auto pb-40">
       {/* Cover Image Placeholder */}
@@ -300,14 +388,14 @@ const BlockEditor: React.FC = () => {
           <div className="mb-8 p-4 bg-gray-50 dark:bg-notion-dark-hover rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
               <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase">Start with a template</h3>
               <div className="flex space-x-2 overflow-x-auto pb-2">
+                  <button onClick={() => applyTemplate('tasks-tracker')} className="flex items-center px-3 py-2 bg-white dark:bg-notion-dark-sidebar border border-gray-200 dark:border-gray-600 rounded hover:shadow-sm text-sm whitespace-nowrap">
+                      <CheckSquare size={14} className="mr-2 text-green-500" /> Tasks Tracker
+                  </button>
                   <button onClick={() => applyTemplate('meeting')} className="flex items-center px-3 py-2 bg-white dark:bg-notion-dark-sidebar border border-gray-200 dark:border-gray-600 rounded hover:shadow-sm text-sm whitespace-nowrap">
                       <Calendar size={14} className="mr-2 text-red-500" /> Meeting Notes
                   </button>
                   <button onClick={() => applyTemplate('roadmap')} className="flex items-center px-3 py-2 bg-white dark:bg-notion-dark-sidebar border border-gray-200 dark:border-gray-600 rounded hover:shadow-sm text-sm whitespace-nowrap">
                       <Trello size={14} className="mr-2 text-blue-500" /> Roadmap
-                  </button>
-                  <button onClick={() => applyTemplate('docs')} className="flex items-center px-3 py-2 bg-white dark:bg-notion-dark-sidebar border border-gray-200 dark:border-gray-600 rounded hover:shadow-sm text-sm whitespace-nowrap">
-                      <FileText size={14} className="mr-2 text-yellow-500" /> Docs
                   </button>
                   <button onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isTemplatesOpen', value: true } })} className="flex items-center px-3 py-2 bg-white dark:bg-notion-dark-sidebar border border-gray-200 dark:border-gray-600 rounded hover:shadow-sm text-sm whitespace-nowrap">
                       More...
@@ -344,6 +432,7 @@ const BlockEditor: React.FC = () => {
                 position={slashMenu.position} 
                 onSelect={handleSlashMenuSelect} 
                 onClose={() => setSlashMenu({ ...slashMenu, open: false })} 
+                query={slashQuery}
             />
           </>
       )}

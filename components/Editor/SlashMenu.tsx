@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { BlockType } from '../../types';
 import { 
@@ -9,6 +10,7 @@ interface SlashMenuProps {
   position: { top: number; left: number };
   onSelect: (type: BlockType) => void;
   onClose: () => void;
+  query: string;
 }
 
 const ITEMS: { type: BlockType; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -19,6 +21,7 @@ const ITEMS: { type: BlockType; label: string; icon: React.ReactNode; desc: stri
   { type: 'bullet-list', label: 'Bulleted list', icon: <List size={16} />, desc: 'Create a simple bulleted list.' },
   { type: 'todo', label: 'To-do list', icon: <CheckSquare size={16} />, desc: 'Track tasks with a to-do list.' },
   { type: 'callout', label: 'Callout', icon: <Megaphone size={16} />, desc: 'Make writing stand out.' },
+  { type: 'date', label: 'Date or Reminder', icon: <Calendar size={16} />, desc: 'Set a date or reminder.' },
   { type: 'table', label: 'Table', icon: <Table size={16} />, desc: 'Add a simple database table.' },
   { type: 'board', label: 'Board', icon: <Trello size={16} />, desc: 'Kanban board for project management.' },
   { type: 'calendar', label: 'Calendar', icon: <Calendar size={16} />, desc: 'Monthly view for events.' },
@@ -33,20 +36,31 @@ const ITEMS: { type: BlockType; label: string; icon: React.ReactNode; desc: stri
   { type: 'image', label: 'Image', icon: <ImageIcon size={16} />, desc: 'Embed with a link.' },
 ];
 
-const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClose }) => {
+const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClose, query }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const filteredItems = ITEMS.filter(item => 
+      item.label.toLowerCase().includes(query.toLowerCase()) || 
+      item.desc.toLowerCase().includes(query.toLowerCase())
+  );
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (filteredItems.length === 0) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % ITEMS.length);
+        setSelectedIndex(prev => (prev + 1) % filteredItems.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex(prev => (prev - 1 + ITEMS.length) % ITEMS.length);
+        setSelectedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length);
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        onSelect(ITEMS[selectedIndex].type);
+        onSelect(filteredItems[selectedIndex].type);
       } else if (e.key === 'Escape') {
         onClose();
       }
@@ -54,7 +68,18 @@ const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClose }) =>
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIndex, onSelect, onClose]);
+  }, [selectedIndex, filteredItems, onSelect, onClose]);
+
+  if (filteredItems.length === 0) {
+      return (
+        <div 
+            className="fixed z-50 w-72 bg-white dark:bg-notion-dark-sidebar rounded-md shadow-xl border border-notion-border dark:border-notion-dark-border overflow-hidden p-3 text-sm text-notion-dim"
+            style={{ top: position.top + 24, left: position.left }}
+        >
+            No results
+        </div>
+      );
+  }
 
   return (
     <div 
@@ -62,7 +87,7 @@ const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClose }) =>
       style={{ top: position.top + 24, left: position.left }}
     >
       <div className="p-2 text-xs font-semibold text-notion-dim uppercase">Basic blocks</div>
-      {ITEMS.map((item, idx) => (
+      {filteredItems.map((item, idx) => (
         <div 
           key={item.type}
           className={`flex items-center p-2 cursor-pointer ${idx === selectedIndex ? 'bg-notion-hover dark:bg-notion-dark-hover' : ''}`}

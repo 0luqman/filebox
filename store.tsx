@@ -16,6 +16,8 @@ type Action =
   | { type: 'DELETE_PAGE'; payload: string }
   | { type: 'SET_UI_STATE'; payload: { key: keyof WorkspaceState['ui']; value: any } }
   | { type: 'MARK_NOTIFICATIONS_READ' }
+  | { type: 'MARK_SINGLE_NOTIFICATION_READ'; payload: string }
+  | { type: 'ADD_NOTIFICATION'; payload: Omit<Notification, 'id' | 'read' | 'group'> }
   | { type: 'UPDATE_ENV_VAR'; payload: { id: string; key?: string; value?: string } }
   | { type: 'ADD_ENV_VAR' }
   | { type: 'REMOVE_ENV_VAR'; payload: string };
@@ -24,9 +26,72 @@ const defaultState: WorkspaceState = {
   pages: INITIAL_PAGES,
   content: INITIAL_CONTENT,
   notifications: [
-      { id: 'n1', text: "Notion AI: I've summarized your meeting notes.", time: '2m ago', read: false, pageId: 'root-3' },
-      { id: 'n2', text: "Engineering Team mentioned you in 'API Status'.", time: '1h ago', read: false, pageId: 'root-2' },
-      { id: 'n3', text: "Welcome to Filebox! Try the new Calendar view.", time: '1d ago', read: true, pageId: 'root-1' }
+      { 
+          id: 'n1', 
+          type: 'reminder', 
+          title: 'Reminder in', 
+          context: 'Pair of Linear Equations and Light', 
+          time: '16m', 
+          read: false, 
+          pageId: 'root-1', 
+          group: 'Today',
+          description: 'Due date: 02/09/2026'
+      },
+      { 
+          id: 'n2', 
+          type: 'reminder', 
+          title: 'Reminder in', 
+          context: 'Rise of Nationalism in Europe and Hissa Nasr', 
+          time: '16m', 
+          read: false, 
+          pageId: 'root-1',
+          group: 'Today',
+          description: 'Due date: 02/09/2026'
+      },
+      { 
+          id: 'n3', 
+          type: 'reminder', 
+          title: 'Reminder in', 
+          context: 'Resource and Development and Gazaliyaat', 
+          time: '16m', 
+          read: false, 
+          pageId: 'root-1',
+          group: 'Today',
+          description: 'Due date: 02/09/2026'
+      },
+      { 
+          id: 'n4', 
+          type: 'mention', 
+          title: 'Notion mentioned you in', 
+          context: 'Session 4 of Puppy Raffle', 
+          time: '2h', 
+          read: true, 
+          pageId: 'root-2', 
+          group: 'Today',
+          description: 'Assignee: @Mir luqman'
+      },
+      { 
+          id: 'n5', 
+          type: 'mention', 
+          title: 'Notion mentioned you in', 
+          context: 'Sting Energy', 
+          time: '2h', 
+          read: true, 
+          pageId: 'root-2', 
+          group: 'Today',
+          description: 'Assignee: @Mir luqman'
+      },
+      {
+          id: 'n6',
+          type: 'reminder',
+          title: 'Reminder in',
+          context: 'Rise of Nationalism in Europe and Hissa Nasr',
+          time: '1d',
+          read: true,
+          pageId: 'root-1',
+          group: 'This Week',
+          description: 'Due date: 02/09/2026'
+      }
   ],
   envVars: [
     { id: '1', key: 'API_KEY', value: 'AlzaSyAty3d38TobHA_7...' },
@@ -35,11 +100,11 @@ const defaultState: WorkspaceState = {
   ],
   currentPageId: 'root-1',
   sidebarWidth: 240,
-  isDarkMode: false,
+  isDarkMode: true,
   user: {
-    name: "Oluqman",
-    email: "oluqman@example.com",
-    avatar: "https://i.pravatar.cc/150?u=olu"
+    name: "Mir luqman",
+    email: "mirluqman@example.com",
+    avatar: "https://i.pravatar.cc/150?u=mir"
   },
   ui: {
     isSearchOpen: false,
@@ -59,9 +124,13 @@ const loadState = (): WorkspaceState => {
       // Ensure activeView is valid if state was saved during 'deploy' view
       const activeView = (parsed.ui?.activeView === 'deploy') ? 'pages' : (parsed.ui?.activeView || 'pages');
       
+      // Merge with default notifications if the saved ones are old format
+      const notifications = parsed.notifications || defaultState.notifications;
+
       return { 
           ...defaultState, 
           ...parsed, 
+          notifications, // Use potentially updated notifications structure if merging logic was better, but basic load is fine.
           ui: { ...defaultState.ui, ...parsed.ui, activeView } 
       };
     }
@@ -199,6 +268,23 @@ const reducer = (state: WorkspaceState, action: Action): WorkspaceState => {
             ...state,
             notifications: state.notifications.map(n => ({ ...n, read: true }))
         };
+    case 'MARK_SINGLE_NOTIFICATION_READ':
+        return {
+            ...state,
+            notifications: state.notifications.map(n => n.id === action.payload ? { ...n, read: true } : n)
+        }
+    case 'ADD_NOTIFICATION': {
+        const newNotification: Notification = {
+            id: generateId(),
+            read: false,
+            group: 'Today', // Default for simulation
+            ...action.payload
+        };
+        return {
+            ...state,
+            notifications: [newNotification, ...state.notifications]
+        }
+    }
     case 'UPDATE_ENV_VAR':
       return {
         ...state,

@@ -20,15 +20,17 @@ export type BlockType =
   | 'jira'
   | 'video'
   | 'embed'
-  | 'callout';
+  | 'callout'
+  | 'date' // New block type
+  | 'database';
 
 export interface Block {
   id: string;
   type: BlockType;
   content: string;
-  properties?: Record<string, any>; // e.g., checked for todo, language for code, url for image, table data
-  children?: Block[]; // For nested blocks like toggles
-  isOpen?: boolean; // For toggles
+  properties?: Record<string, any>; // e.g., checked, date, reminderOption
+  children?: Block[]; 
+  isOpen?: boolean; 
 }
 
 export interface PageMetadata {
@@ -38,22 +40,27 @@ export interface PageMetadata {
   parentId: string | null;
   createdAt: number;
   updatedAt: number;
-  isExpanded?: boolean; // Sidebar UI state
+  isExpanded?: boolean; 
   isFavorite?: boolean;
 }
 
 export interface PageContent {
-  id: string; // Matches PageMetadata id
+  id: string; 
   coverImage?: string;
   blocks: Block[];
 }
 
 export interface Notification {
   id: string;
-  text: string;
+  type: 'reminder' | 'mention' | 'reply' | 'system';
+  title: string; 
+  context: string; 
+  description?: string; 
   time: string;
   read: boolean;
   pageId?: string;
+  sender?: { name: string; avatar: string };
+  group?: 'Today' | 'Yesterday' | 'This Week' | 'Older';
 }
 
 export interface EnvVar {
@@ -64,7 +71,7 @@ export interface EnvVar {
 
 export interface WorkspaceState {
   pages: Record<string, PageMetadata>;
-  content: Record<string, PageContent>; // Loaded content cache
+  content: Record<string, PageContent>; 
   notifications: Notification[];
   envVars: EnvVar[];
   currentPageId: string | null;
