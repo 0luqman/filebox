@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar/Sidebar';
 import BlockEditor from './Editor/BlockEditor';
-import DeploymentView from './Deployment/DeploymentView';
 import { useStore } from '../store';
 import { Menu, Share, MoreHorizontal, Clock, Star, Sun, Moon, Sparkles, Send } from 'lucide-react';
 
@@ -42,9 +41,6 @@ const Layout: React.FC = () => {
   };
 
   const renderMainContent = () => {
-      if (state.ui.activeView === 'deploy') {
-          return <DeploymentView />;
-      }
       return (
         <div className="flex-1 overflow-y-auto px-12 md:px-24 pt-8 pb-32">
             <BlockEditor />
@@ -57,49 +53,47 @@ const Layout: React.FC = () => {
       <Sidebar />
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-notion-dark-bg transition-colors duration-300 relative">
         
-        {/* Topbar (Hide on Deploy View for cleaner look) */}
-        {state.ui.activeView !== 'deploy' && (
-            <header className="h-12 flex items-center justify-between px-3 sticky top-0 z-10 bg-white dark:bg-notion-dark-bg transition-colors duration-300">
-            <div className="flex items-center text-sm">
-                <div className="flex items-center text-notion-text dark:text-notion-dark-text">
-                    <span className="truncate max-w-[200px]">{currentPage?.title || (state.ui.activeView === 'inbox' ? 'Inbox' : 'Loading...')}</span>
-                </div>
+        {/* Topbar */}
+        <header className="h-12 flex items-center justify-between px-3 sticky top-0 z-10 bg-white dark:bg-notion-dark-bg transition-colors duration-300">
+        <div className="flex items-center text-sm">
+            <div className="flex items-center text-notion-text dark:text-notion-dark-text">
+                <span className="truncate max-w-[200px]">{currentPage?.title || (state.ui.activeView === 'inbox' ? 'Inbox' : 'Loading...')}</span>
             </div>
-            
-            <div className="flex items-center space-x-2 text-notion-dim">
-                <button 
-                    onClick={handleShare}
-                    className="text-xs px-2 py-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors mr-2 hidden sm:block"
-                >
-                    {isCopied ? "Copied Link!" : "Share"}
-                </button>
-                <button 
-                    onClick={() => dispatch({ type: 'TOGGLE_THEME' })} 
-                    className="p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors"
-                    title="Toggle Theme"
-                >
-                    {state.isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
-                <button 
-                    onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isAIOpen', value: !state.ui.isAIOpen } })} 
-                    className={`p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors ${state.ui.isAIOpen ? 'text-purple-500' : ''}`}
-                    title="Notion AI"
-                >
-                    <Sparkles size={18} />
-                </button>
-                <button 
-                    onClick={handleFavorite}
-                    className={`p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}`}
-                    title="Favorite"
-                >
-                    <Star size={18} className={isFavorite ? 'fill-current' : ''} />
-                </button>
-                <button className="p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors">
-                    <MoreHorizontal size={18} />
-                </button>
-            </div>
-            </header>
-        )}
+        </div>
+        
+        <div className="flex items-center space-x-2 text-notion-dim">
+            <button 
+                onClick={handleShare}
+                className="text-xs px-2 py-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors mr-2 hidden sm:block"
+            >
+                {isCopied ? "Copied Link!" : "Share"}
+            </button>
+            <button 
+                onClick={() => dispatch({ type: 'TOGGLE_THEME' })} 
+                className="p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors"
+                title="Toggle Theme"
+            >
+                {state.isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button 
+                onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isAIOpen', value: !state.ui.isAIOpen } })} 
+                className={`p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors ${state.ui.isAIOpen ? 'text-purple-500' : ''}`}
+                title="Notion AI"
+            >
+                <Sparkles size={18} />
+            </button>
+            <button 
+                onClick={handleFavorite}
+                className={`p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}`}
+                title="Favorite"
+            >
+                <Star size={18} className={isFavorite ? 'fill-current' : ''} />
+            </button>
+            <button className="p-1 hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded transition-colors">
+                <MoreHorizontal size={18} />
+            </button>
+        </div>
+        </header>
 
         {/* Editor Area / Content Area */}
         {renderMainContent()}

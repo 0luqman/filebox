@@ -35,7 +35,7 @@ const defaultState: WorkspaceState = {
   ],
   currentPageId: 'root-1',
   sidebarWidth: 240,
-  isDarkMode: true, // Default to dark mode to match Vercel dashboard screenshot
+  isDarkMode: false,
   user: {
     name: "Oluqman",
     email: "oluqman@example.com",
@@ -46,7 +46,7 @@ const defaultState: WorkspaceState = {
     isSettingsOpen: false,
     isAIOpen: false,
     isTemplatesOpen: false,
-    activeView: 'deploy' // Default to the Vercel replica view
+    activeView: 'pages'
   }
 };
 
@@ -56,8 +56,14 @@ const loadState = (): WorkspaceState => {
     const saved = localStorage.getItem('filebox-state');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Merge with default UI state to ensure 'deploy' is respected if just updated
-      return { ...defaultState, ...parsed, ui: { ...defaultState.ui, ...parsed.ui } };
+      // Ensure activeView is valid if state was saved during 'deploy' view
+      const activeView = (parsed.ui?.activeView === 'deploy') ? 'pages' : (parsed.ui?.activeView || 'pages');
+      
+      return { 
+          ...defaultState, 
+          ...parsed, 
+          ui: { ...defaultState.ui, ...parsed.ui, activeView } 
+      };
     }
   } catch (e) {
     console.error("Failed to load state", e);

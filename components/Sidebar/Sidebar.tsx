@@ -14,8 +14,7 @@ import {
   Monitor,
   Inbox,
   Sparkles,
-  LayoutTemplate,
-  Rocket
+  LayoutTemplate
 } from 'lucide-react';
 import { PageMetadata } from '../../types';
 
@@ -147,13 +146,7 @@ const Sidebar: React.FC = () => {
             <Search size={16} className="mr-2" />
             <span>Search</span>
         </div>
-        <div 
-            className={`flex items-center px-3 py-1 text-sm hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer ${state.ui.activeView === 'deploy' ? 'bg-notion-hover dark:bg-notion-dark-hover text-notion-text dark:text-notion-dark-text font-medium' : 'text-notion-dim'}`}
-            onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'activeView', value: 'deploy' } })}
-        >
-            <Rocket size={16} className="mr-2" />
-            <span>Deploy</span>
-        </div>
+        {/* Deploy button removed */}
         <div 
             className="flex items-center px-3 py-1 text-sm text-notion-dim hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer"
             onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isAIOpen', value: true } })}

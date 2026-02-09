@@ -80,7 +80,7 @@ export interface WorkspaceState {
     isSettingsOpen: boolean;
     isAIOpen: boolean;
     isTemplatesOpen: boolean;
-    activeView: 'pages' | 'inbox' | 'deploy';
+    activeView: 'pages' | 'inbox';
   }
 }
 
