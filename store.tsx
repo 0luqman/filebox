@@ -35,18 +35,18 @@ const defaultState: WorkspaceState = {
   ],
   currentPageId: 'root-1',
   sidebarWidth: 240,
-  isDarkMode: false,
+  isDarkMode: true, // Default to dark mode to match Vercel dashboard screenshot
   user: {
-    name: "Demo User",
-    email: "demo@example.com",
-    avatar: "https://i.pravatar.cc/150?u=notion"
+    name: "Oluqman",
+    email: "oluqman@example.com",
+    avatar: "https://i.pravatar.cc/150?u=olu"
   },
   ui: {
     isSearchOpen: false,
     isSettingsOpen: false,
     isAIOpen: false,
     isTemplatesOpen: false,
-    activeView: 'pages'
+    activeView: 'deploy' // Default to the Vercel replica view
   }
 };
 
@@ -56,6 +56,7 @@ const loadState = (): WorkspaceState => {
     const saved = localStorage.getItem('filebox-state');
     if (saved) {
       const parsed = JSON.parse(saved);
+      // Merge with default UI state to ensure 'deploy' is respected if just updated
       return { ...defaultState, ...parsed, ui: { ...defaultState.ui, ...parsed.ui } };
     }
   } catch (e) {
