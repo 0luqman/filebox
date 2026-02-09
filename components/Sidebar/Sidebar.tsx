@@ -14,7 +14,9 @@ import {
   Monitor,
   Inbox,
   Sparkles,
-  LayoutTemplate
+  LayoutTemplate,
+  Code,
+  ExternalLink
 } from 'lucide-react';
 import { PageMetadata } from '../../types';
 
@@ -280,6 +282,22 @@ const Sidebar: React.FC = () => {
                     </div>
                     <span className="text-sm text-notion-dim">{state.isDarkMode ? 'Dark' : 'Light'}</span>
                 </div>
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="text-xs font-semibold text-notion-dim uppercase mb-3">Developer</h4>
+                <a 
+                    href="https://mirmohmmadluqman.github.io/portfolio/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer text-notion-text dark:text-notion-dark-text no-underline"
+                >
+                    <div className="flex items-center">
+                        <Code size={18} className="mr-2" />
+                        <span>Mir Luqman</span>
+                    </div>
+                    <ExternalLink size={14} className="text-notion-dim" />
+                </a>
             </div>
         </div>
     </Modal>
