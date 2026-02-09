@@ -1,3 +1,4 @@
+
 export type BlockType = 
   | 'text' 
   | 'h1' 
@@ -55,10 +56,17 @@ export interface Notification {
   pageId?: string;
 }
 
+export interface EnvVar {
+  id: string;
+  key: string;
+  value: string;
+}
+
 export interface WorkspaceState {
   pages: Record<string, PageMetadata>;
   content: Record<string, PageContent>; // Loaded content cache
   notifications: Notification[];
+  envVars: EnvVar[];
   currentPageId: string | null;
   sidebarWidth: number;
   isDarkMode: boolean;
@@ -72,7 +80,7 @@ export interface WorkspaceState {
     isSettingsOpen: boolean;
     isAIOpen: boolean;
     isTemplatesOpen: boolean;
-    activeView: 'pages' | 'inbox';
+    activeView: 'pages' | 'inbox' | 'deploy';
   }
 }
 

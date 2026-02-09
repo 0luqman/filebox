@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { WorkspaceState, PageMetadata, PageContent, Block, BlockType, Notification } from './types';
+import { WorkspaceState, PageMetadata, PageContent, Block, BlockType, Notification, EnvVar } from './types';
 import { INITIAL_PAGES, INITIAL_CONTENT, generateId } from './utils';
 
 // Actions
@@ -14,7 +15,10 @@ type Action =
   | { type: 'TOGGLE_FAVORITE'; payload: string }
   | { type: 'DELETE_PAGE'; payload: string }
   | { type: 'SET_UI_STATE'; payload: { key: keyof WorkspaceState['ui']; value: any } }
-  | { type: 'MARK_NOTIFICATIONS_READ' };
+  | { type: 'MARK_NOTIFICATIONS_READ' }
+  | { type: 'UPDATE_ENV_VAR'; payload: { id: string; key?: string; value?: string } }
+  | { type: 'ADD_ENV_VAR' }
+  | { type: 'REMOVE_ENV_VAR'; payload: string };
 
 const defaultState: WorkspaceState = {
   pages: INITIAL_PAGES,
@@ -23,6 +27,11 @@ const defaultState: WorkspaceState = {
       { id: 'n1', text: "Notion AI: I've summarized your meeting notes.", time: '2m ago', read: false, pageId: 'root-3' },
       { id: 'n2', text: "Engineering Team mentioned you in 'API Status'.", time: '1h ago', read: false, pageId: 'root-2' },
       { id: 'n3', text: "Welcome to Filebox! Try the new Calendar view.", time: '1d ago', read: true, pageId: 'root-1' }
+  ],
+  envVars: [
+    { id: '1', key: 'API_KEY', value: 'AlzaSyAty3d38TobHA_7...' },
+    { id: '2', key: 'GEMINI_API_KEY', value: 'AlzaSyAty3d38TobHA_7...' },
+    { id: '3', key: 'GOOGLE_API_KEY', value: 'AlzaSyAty3d38TobHA_7...' }
   ],
   currentPageId: 'root-1',
   sidebarWidth: 240,
@@ -47,7 +56,6 @@ const loadState = (): WorkspaceState => {
     const saved = localStorage.getItem('filebox-state');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Merge with default to ensure new fields (like UI) exist
       return { ...defaultState, ...parsed, ui: { ...defaultState.ui, ...parsed.ui } };
     }
   } catch (e) {
@@ -56,7 +64,6 @@ const loadState = (): WorkspaceState => {
   return defaultState;
 };
 
-// Helper to find and update a block deeply (for nested blocks)
 const updateBlockInTree = (blocks: Block[], blockId: string, updater: (b: Block) => Block): Block[] => {
   return blocks.map(block => {
     if (block.id === blockId) {
@@ -69,7 +76,6 @@ const updateBlockInTree = (blocks: Block[], blockId: string, updater: (b: Block)
   });
 };
 
-// Reducer
 const reducer = (state: WorkspaceState, action: Action): WorkspaceState => {
   switch (action.type) {
     case 'SET_PAGE':
@@ -144,7 +150,6 @@ const reducer = (state: WorkspaceState, action: Action): WorkspaceState => {
       if (!pageContent) return state;
       
       const newBlocks = updateBlockInTree(pageContent.blocks, action.payload.blockId, (block) => {
-         // Handle top-level properties like 'isOpen' for toggles separately if they aren't in 'properties' bag
          if (action.payload.key === 'isOpen') {
              return { ...block, isOpen: action.payload.value };
          }
@@ -187,12 +192,28 @@ const reducer = (state: WorkspaceState, action: Action): WorkspaceState => {
             ...state,
             notifications: state.notifications.map(n => ({ ...n, read: true }))
         };
+    case 'UPDATE_ENV_VAR':
+      return {
+        ...state,
+        envVars: state.envVars.map(ev => 
+          ev.id === action.payload.id ? { ...ev, ...action.payload } : ev
+        )
+      };
+    case 'ADD_ENV_VAR':
+      return {
+        ...state,
+        envVars: [...state.envVars, { id: generateId(), key: '', value: '' }]
+      };
+    case 'REMOVE_ENV_VAR':
+      return {
+        ...state,
+        envVars: state.envVars.filter(ev => ev.id !== action.payload)
+      };
     default:
       return state;
   }
 };
 
-// Context
 interface StoreContextType {
   state: WorkspaceState;
   dispatch: React.Dispatch<Action>;
@@ -203,12 +224,12 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, loadState());
 
-  // Persistence
   useEffect(() => {
     localStorage.setItem('filebox-state', JSON.stringify({
         pages: state.pages,
         content: state.content,
         notifications: state.notifications,
+        envVars: state.envVars,
         currentPageId: state.currentPageId,
         isDarkMode: state.isDarkMode,
         user: state.user,
@@ -216,7 +237,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   }, [state]);
 
-  // Sync theme
   useEffect(() => {
     if (state.isDarkMode) {
       document.documentElement.classList.add('dark');

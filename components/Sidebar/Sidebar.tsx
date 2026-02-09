@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useStore } from '../../store';
 import { 
@@ -13,7 +14,8 @@ import {
   Monitor,
   Inbox,
   Sparkles,
-  LayoutTemplate
+  LayoutTemplate,
+  Rocket
 } from 'lucide-react';
 import { PageMetadata } from '../../types';
 
@@ -26,7 +28,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ page, depth }) => {
   const { state, dispatch } = useStore();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Find children
   const children = (Object.values(state.pages) as PageMetadata[]).filter(p => p.parentId === page.id);
   const isActive = state.currentPageId === page.id && state.ui.activeView === 'pages';
   
@@ -74,7 +75,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ page, depth }) => {
         <span className="mr-2">{page.icon}</span>
         <span className="truncate flex-1">{page.title}</span>
 
-        {/* Quick Actions on Hover */}
         {(isHovered || isActive) && (
           <div className="flex items-center space-x-1 opacity-60 group-hover:opacity-100">
              <button onClick={handleDelete} className="p-0.5 hover:bg-gray-300 dark:hover:bg-gray-600 rounded" title="Delete">
@@ -119,13 +119,11 @@ const Sidebar: React.FC = () => {
   const { state, dispatch } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Group pages
   const allPages = Object.values(state.pages) as PageMetadata[];
   const rootPages = allPages.filter(p => p.parentId === null);
   const favoritePages = allPages.filter(p => p.isFavorite);
   const unreadCount = state.notifications.filter(n => !n.read).length;
 
-  // Search logic
   const filteredPages = searchQuery 
     ? allPages.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
@@ -133,7 +131,6 @@ const Sidebar: React.FC = () => {
   return (
     <>
     <div className="flex flex-col h-full bg-notion-sidebar dark:bg-notion-dark-sidebar border-r border-notion-border dark:border-notion-dark-border w-60 flex-shrink-0 transition-colors duration-300">
-      {/* Workspace Switcher */}
       <div className="h-12 flex items-center px-4 hover:bg-notion-hover dark:hover:bg-notion-dark-hover cursor-pointer transition-colors m-2 rounded-md">
         <div className="w-5 h-5 bg-notion-blue text-white rounded flex items-center justify-center text-xs font-bold mr-2">
           F
@@ -142,7 +139,6 @@ const Sidebar: React.FC = () => {
         <ChevronDown size={14} className="ml-auto text-notion-dim" />
       </div>
 
-      {/* Quick Links */}
       <div className="px-2 mb-4 space-y-0.5">
         <div 
             className="flex items-center px-3 py-1 text-sm text-notion-dim hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer"
@@ -150,6 +146,13 @@ const Sidebar: React.FC = () => {
         >
             <Search size={16} className="mr-2" />
             <span>Search</span>
+        </div>
+        <div 
+            className={`flex items-center px-3 py-1 text-sm hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer ${state.ui.activeView === 'deploy' ? 'bg-notion-hover dark:bg-notion-dark-hover text-notion-text dark:text-notion-dark-text font-medium' : 'text-notion-dim'}`}
+            onClick={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'activeView', value: 'deploy' } })}
+        >
+            <Rocket size={16} className="mr-2" />
+            <span>Deploy</span>
         </div>
         <div 
             className="flex items-center px-3 py-1 text-sm text-notion-dim hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer"
@@ -187,9 +190,7 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Pages Scroll Area */}
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
-        {/* Favorites Section */}
         {favoritePages.length > 0 && (
             <div className="mb-4">
                 <div className="px-3 py-1 text-xs font-semibold text-notion-dim">Favorites</div>
@@ -216,7 +217,6 @@ const Sidebar: React.FC = () => {
         ))}
       </div>
 
-       {/* Bottom Actions */}
        <div className="p-2 border-t border-notion-border dark:border-notion-dark-border">
           <div 
             className="flex items-center px-3 py-1 text-sm text-notion-dim hover:bg-notion-hover dark:hover:bg-notion-dark-hover rounded cursor-pointer"
@@ -228,7 +228,6 @@ const Sidebar: React.FC = () => {
        </div>
     </div>
 
-    {/* Search Modal */}
     <Modal 
         isOpen={state.ui.isSearchOpen} 
         onClose={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isSearchOpen', value: false } })}
@@ -266,7 +265,6 @@ const Sidebar: React.FC = () => {
         </div>
     </Modal>
 
-    {/* Settings Modal */}
     <Modal 
         isOpen={state.ui.isSettingsOpen} 
         onClose={() => dispatch({ type: 'SET_UI_STATE', payload: { key: 'isSettingsOpen', value: false } })}
@@ -290,17 +288,6 @@ const Sidebar: React.FC = () => {
                     </div>
                     <span className="text-sm text-notion-dim">{state.isDarkMode ? 'Dark' : 'Light'}</span>
                 </div>
-            </div>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                 <h4 className="text-xs font-semibold text-notion-dim uppercase mb-3">Integrations</h4>
-                 <div className="flex items-center justify-between p-2">
-                     <span className="text-sm">Connect GitHub</span>
-                     <button className="text-xs bg-notion-blue text-white px-2 py-1 rounded">Connect</button>
-                 </div>
-                 <div className="flex items-center justify-between p-2">
-                     <span className="text-sm">Connect Jira</span>
-                     <button className="text-xs bg-gray-200 dark:bg-gray-700 text-notion-text dark:text-notion-dark-text px-2 py-1 rounded">Connect</button>
-                 </div>
             </div>
         </div>
     </Modal>
