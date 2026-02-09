@@ -1,0 +1,5 @@
+{
+  "name": "filebox ",
+  "description": "A feature-rich, block-based workspace application replicating the core experience of Notion with nested pages, slash commands, and real-time-simulated editing.",
+  "requestFramePermissions": []
+}
